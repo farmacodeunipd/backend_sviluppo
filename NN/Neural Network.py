@@ -15,24 +15,13 @@ import pickle
 if __name__ == '__main__':
     multiprocessing.freeze_support()
     
-    # Creating a Dataset
-    if not os.path.exists('synthetic_data.csv'):
-        data = {
-            "user_id": np.random.randint(1, 100, size=100),
-            "product_id": np.random.randint(1, 1000, size=100),
-            "rating": np.random.randint(1, 6, size=100),  # Assuming ratings are integers from 1 to 5
-            "age": np.random.randint(18, 70, size=100),
-            "gender": np.random.choice(["Male", "Female"], size=100),
-            "occupation": np.random.choice(["Student", "Professional", "Retired"], size=100),
-            "zip_code": np.random.randint(10000, 99999, size=100),  # Assuming zip codes are integers
-        }
-        df = pd.DataFrame(data)
-        df.to_csv('synthetic_data.csv', index=False)
-        print("created Data")
+    # Loading the dataset
+    if not os.path.exists('./NN/data_preprocessed_NN.csv'):
+        print("Preprocessed Data are not ready or do not exist, please wait or start preprocessing the data.")
     else:
-        data = pd.read_csv('synthetic_data.csv')
+        data = pd.read_csv('./NN/data_preprocessed_NN.csv')
         df = pd.DataFrame(data)
-        print("loaded Data")
+        print("Preprocessed Data have been loaded successfully.")
 
     # Split the data into train and test sets
     df_train, df_test = train_test_split(df, test_size=0.2)
@@ -40,16 +29,19 @@ if __name__ == '__main__':
 
     # Define the column setup
     wide_cols = [
-        "gender",
-        "occupation",
-        "age",
-        "zip_code"
+        "cod_cli",
+        "cod_art",
+        "cod_linea_comm",
+        "cod_sett_comm",
+        "cod_fam_comm",
     ]
-    # crossed_cols = [""]
+    crossed_cols = [("cod_linea_comm", "cod_sett_comm")]
 
     cat_embed_cols = [
-        "product_id",
-        "user_id",
+        "cod_cli",
+        "cod_art",
+        "cod_linea_comm",
+        "cod_fam_comm",
     ]
     continuous_cols = ["rating"]
     target = "rating"
@@ -61,7 +53,6 @@ if __name__ == '__main__':
 
     tab_preprocessor = TabPreprocessor(cat_embed_cols=cat_embed_cols)
     X_tab = tab_preprocessor.fit_transform(df_train)
-
 
     # Save the preprocessors
     os.makedirs("model_weights", exist_ok=True)
@@ -101,7 +92,6 @@ if __name__ == '__main__':
     # 1. Build the model
     model_new = WideDeep(wide=wide, deeptabular=tab_mlp)
     model_new.load_state_dict(torch.load("model_weights/wd_model.pt"))
-
 
     # TOPN #
     # needs to load model, get all userids and all productids, create dataframes accordingly and then act with the topN
