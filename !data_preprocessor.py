@@ -51,6 +51,9 @@ def merge_files(file1, file2, output_file):
     merged_df.drop('des_art', axis=1, inplace=True)
     merged_df.drop('cod_sott_comm', axis=1, inplace=True)
 
+    
+    merged_df.sort_values(by=['cod_cli'])
+
     # Save the merged DataFrame to a new file
     merged_df.to_csv(output_file, index=False)
 
