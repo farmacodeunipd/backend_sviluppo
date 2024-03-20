@@ -1,0 +1,26 @@
+# Use the official MySQL image as the base image
+FROM mysql:latest
+
+# Set the default authentication plugin for MySQL
+CMD ["mysqld", "--default-authentication-plugin=mysql_native_password"]
+
+# Set environment variables for MySQL configuration
+ENV MYSQL_ROOT_HOST=localhost
+ENV MYSQL_HOST=*
+ENV MYSQL_ROOT_PASSWORD=password
+ENV MYSQL_DATABASE=mydatabase
+ENV MYSQL_USER=myuser
+ENV MYSQL_PASSWORD=mypassword
+ENV MYSQL_TCP_PORT=3306
+
+# Copy the csv
+COPY . .
+
+# Copy the MySQL configuration file with --secure-file-priv option
+COPY ./my.cnf /etc/mysql/my.cnf
+
+# Copy the SQL initialization script into the Docker image
+COPY ./db.sql /docker-entrypoint-initdb.d/db.sql
+
+# Expose MySQL port
+EXPOSE 3306

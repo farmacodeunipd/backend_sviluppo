@@ -57,6 +57,6 @@ def merge_files(file1, file2, output_file):
     # Save the merged DataFrame to a new file
     merged_df.to_csv(output_file, index=False)
 
-process_file('./dataset/ordclidet.csv', './dataset/ordclidet_feedback.csv', './NN/data_preprocessed_matrix.csv')
+process_file('.db/dataset/ordclidet.csv', '.db/dataset/ordclidet_feedback.csv', './NN/data_preprocessed_matrix.csv')
 
-merge_files('./NN/data_preprocessed_matrix.csv', './dataset/anaart.csv', './NN/data_preprocessed_NN.csv')
+merge_files('./NN/data_preprocessed_matrix.csv', '.db/dataset/anaart.csv', './NN/data_preprocessed_NN.csv')
