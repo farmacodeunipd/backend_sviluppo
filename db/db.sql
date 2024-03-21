@@ -80,6 +80,16 @@ CREATE TABLE ordclidet(
     FOREIGN KEY(cod_art) REFERENCES anaart(cod_art) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
+CREATE TABLE ordclidet_feedback(
+    cod_cli int,
+    cod_art varchar(13),
+    data_ord date,
+    qta_ordinata float,
+    PRIMARY KEY(cod_cli, cod_art, data_ord, qta_ordinata),
+    FOREIGN KEY(cod_cli) REFERENCES anacli(cod_cli) ON UPDATE CASCADE ON DELETE CASCADE,
+    FOREIGN KEY(cod_art) REFERENCES anaart(cod_art) ON UPDATE CASCADE ON DELETE CASCADE
+);
+
 INSERT INTO ute VALUES 
 ("Mario", "Rossi", "1994-09-10", "mario.rossi@ergon.it", "a", "a", TRUE),
 ("Luca", "Verdi", "1994-09-10", "luca.verdi@ergon.it", "b", "b", FALSE);
@@ -128,6 +138,14 @@ IGNORE 1 ROWS;
 
 LOAD DATA INFILE '/dataset/ordclidet.csv'
 INTO TABLE ordclidet
+FIELDS TERMINATED BY ',' ENCLOSED BY '"'
+LINES TERMINATED BY '\n'
+IGNORE 1 ROWS
+(cod_cli, cod_art, @data_ord, qta_ordinata)
+SET data_ord = STR_TO_DATE(@data_ord, '%d/%m/%Y');
+
+LOAD DATA INFILE '/dataset/ordclidet_feedback.csv'
+INTO TABLE ordclidet_feedback
 FIELDS TERMINATED BY ',' ENCLOSED BY '"'
 LINES TERMINATED BY '\n'
 IGNORE 1 ROWS
