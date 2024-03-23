@@ -81,7 +81,53 @@ class Model:
         self.save_model()
 
     def TopN_1UserNItem(self, user_id, n = 5):
-        return 1, 0.5
+        # Read the CSV file containing product IDs
+        products_df = pd.read_csv(product_ids_csv)
+        
+        # Add the user ID column to the DataFrame
+        products_df['cod_cli'] = user_id
+        products_df['cod_linea_comm'] = 'NULL'  # Default value, modify as needed
+        products_df['cod_sett_comm'] = 'NULL'   # Default value, modify as needed
+        products_df['cod_fam_comm'] = 'NULL'    # Default value, modify as needed
+        
+        # Preprocess the product information
+        X_product_wide = wide_preprocessor.transform(products_df)
+        X_product_tab = tab_preprocessor.transform(products_df)
+        
+        # Make predictions for the products and user
+        product_rating_predictions = trained_model.predict(X_wide=X_product_wide, X_tab=X_product_tab, batch_size=64)
+        
+        # Combine product IDs with their predicted ratings
+        product_ratings = list(zip(products_df['cod_art'], product_rating_predictions))
+        
+        # Sort the products by predicted ratings in descending order
+        top_n_products = sorted(product_ratings, key=lambda x: x[1], reverse=True)[:N]
+        
+        # Return the top-N products
+        return top_n_products
     
     def TopN_1ItemNUser(self, item_id, n = 5):
-        return 1, 0.5
+        # Read the CSV file containing user IDs
+        users_df = pd.read_csv(user_ids_csv)
+        
+        # Add the product ID column to the DataFrame
+        users_df['cod_art'] = product_id
+        users_df['cod_linea_comm'] = '11'  # Default value, modify as needed
+        users_df['cod_sett_comm'] = '2V'   # Default value, modify as needed
+        users_df['cod_fam_comm'] = 'G2'    # Default value, modify as needed
+        
+        # Preprocess the user information
+        X_user_wide = wide_preprocessor.transform(users_df)
+        X_user_tab = tab_preprocessor.transform(users_df)
+        
+        # Make predictions for the users and product
+        user_rating_predictions = trained_model.predict(X_wide=X_user_wide, X_tab=X_user_tab, batch_size=64)
+        
+        # Combine user IDs with their predicted ratings
+        user_ratings = list(zip(users_df['cod_cli'], user_rating_predictions))
+        
+        # Sort the users by predicted ratings in descending order
+        top_n_users = sorted(user_ratings, key=lambda x: x[1], reverse=True)[:N]
+        
+        # Return the top-N users
+        return top_n_users
