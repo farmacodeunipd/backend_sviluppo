@@ -56,7 +56,7 @@ class SVD_Preprocessor(Preprocessor):
         grouped_df.to_csv(output_file, index=False)
 
 class NN_Preprocessor(Preprocessor):
-    tables_to_export = ['anaart', 'ordclidet_feedback', 'ordclidet']
+    tables_to_export = ['anaart', 'ordclidet_feedback', 'ordclidet', 'anacli']
     
     def process_file(self, input_file_og, input_file_fb, output_file):
         df1 = pd.read_csv(input_file_og, delimiter=',', thousands=',', decimal='.')
@@ -114,7 +114,7 @@ if __name__ == "__main__":
         for table_name in context.preprocessor.tables_to_export:
             context.preprocessor.retrieve_file(cursor, table_name, csv_folder)
             
-    context.process_file('./preprocessor/exported_csv/ordclidet.csv', './preprocessor/exported_csv/ordclidet_feedback.csv', './algoritmi/NN/data_preprocessed_NN.csv')
+    context.process_file('./preprocessor/exported_csv/ordclidet.csv', './preprocessor/exported_csv/ordclidet_feedback.csv', './algoritmi/data_preprocessed_NN.csv')
     print(f"processed data ready")
     # Switch strategy if needed
     #     context.set_preprocessor(svd_preprocessor)
