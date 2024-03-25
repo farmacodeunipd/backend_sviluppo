@@ -74,9 +74,9 @@ class Model:
             self.model = torch.load(self.file_info.model_file)
             self.model.load_state_dict(torch.load(self.file_info.model_state_file))
             self.state_dict_model = self.model.state_dict()
-            with open(self.file_info.wide_preprocessor_file, 'rb') as file:
+            with open(self.file_info.wide_preprocessor_file, "rb") as file:
                 self.wide_preprocessor = pickle.load(file)
-            with open(self.file_info.tab_preprocessor_file, 'rb') as file:
+            with open(self.file_info.tab_preprocessor_file, "rb") as file:
                 self.tab_preprocessor = pickle.load(file)
         else: 
             self.define_model()
@@ -97,54 +97,56 @@ class Model:
 
         self.save_model()
 
-    def TopN_1UserNItem(self, user_id, n=5):
-        # Read the CSV file containing product IDs
-        products_df = pd.read_csv(self.file_info.item_dataset_path)
-        
-        # Remove the 'rating' column if it exists
-        if 'rating' in products_df.columns:
-            products_df.drop(columns=['rating'], inplace=True)
+    def TopN_1UserNItem(self, user_id, n = 5):
+        #products_df = pd.DataFrame(pd.read_csv(self.file_info.item_dataset_path))
         
         # Add the user ID column to the DataFrame
-        products_df['cod_cli'] = user_id
-        products_df['cod_linea_comm'] = 'NULL'
-        products_df['cod_sett_comm'] = 'NULL'
-        products_df['cod_fam_comm'] = 'NULL'
+        #products_df['cod_cli'] = user_id
+        #products_df['rating'] = 'NULL'
+
+        art_of_interest = [1112834, 1211071, 1634072]
+        art1 = ["11", "12", "16"]
+        art2 = ["3I", "5U", "HM"]
+        art3 = ["D4", "R2", "NB"]
+
+        # Convert user info to a DataFrame
+        products_df = pd.DataFrame({"cod_cli": user_id,
+        "cod_art": art_of_interest,
+        "cod_linea_comm": art1,
+        "cod_sett_comm": art2,
+        "cod_fam_comm": art3,
+        "rating": None})
         
-        # Fit and transform the WidePreprocessor
+        # Fit and transform the preprocessors
         X_product_wide = self.wide_preprocessor.fit_transform(products_df)
-        
-        # Fit and transform the TabPreprocessor
         X_product_tab = self.tab_preprocessor.fit_transform(products_df)
         
         # Make predictions for the products and user
-        product_rating_predictions = self.trainer.predict(X_wide=X_product_wide, X_tab=X_product_tab, batch_size=64)
+        product_rating_predictions = self.trainer.predict(X_wide = X_product_wide, X_tab = X_product_tab, batch_size = self.batch_size)
         
-        # Combine product IDs with their predicted ratings
+        # Combine product IDs with their predicted ratings, sorts it and gets the top n
         product_ratings = list(zip(products_df['cod_art'], product_rating_predictions))
-        
-        # Sort the products by predicted ratings in descending order
         top_n_products = sorted(product_ratings, key=lambda x: x[1], reverse=True)[:n]
         
-        # Return the top-N products
         return top_n_products
     
-    def TopN_1ItemNUser(self, item_id, n = 5):
+    def TopN_1ItemNUser(self, item_infos, n = 5):
         # Read the CSV file containing user IDs
-        users_df = pd.read_csv(self.file_info.user_dataset_path)
+        users_df = pd.DataFrame(pd.read_csv(self.file_info.user_dataset_path))
         
         # Add the product ID column to the DataFrame
-        users_df['cod_art'] = item_id
-        users_df['cod_linea_comm'] = '11'   #TODO queries
-        users_df['cod_sett_comm'] = '2V'
-        users_df['cod_fam_comm'] = 'G2'
+        users_df['cod_art'] = item_infos[0]
+        users_df['cod_linea_comm'] = item_infos[1]
+        users_df['cod_sett_comm'] = item_infos[2]
+        users_df['cod_fam_comm'] = item_infos[3]
+        users_df['rating'] = 'NULL'
         
         # Preprocess the user information
         X_user_wide = self.wide_preprocessor.transform(users_df)
         X_user_tab = self.tab_preprocessor.transform(users_df)
         
         # Make predictions for the users and product
-        user_rating_predictions = self.trainer.predict(X_wide=X_user_wide, X_tab=X_user_tab, batch_size=64)
+        user_rating_predictions = self.trainer.predict(X_wide = X_user_wide, X_tab = X_user_tab, batch_size = self.batch_size)
         
         # Combine user IDs with their predicted ratings
         user_ratings = list(zip(users_df['cod_cli'], user_rating_predictions))
@@ -155,14 +157,14 @@ class Model:
         # Return the top-N users
         return top_n_users
     
-if __name__ == '__main__':
+if __name__ == "__main__":
     multiprocessing.freeze_support()
 
-    file_infos = FileInfo("./algoritmi/ptwidedeep/model.pt", "./algoritmi/ptwidedeep/wd_model.pt", "./algoritmi/ptwidedeep/WidePreprocessor.pkl", "./algoritmi/ptwidedeep/TabPreprocessor.pkl", "./algoritmi/ptwidedeep/data_preprocessed_NN.csv", "./db/dataset/anacli.csv", "./db/dataset/anaart.csv")
+    file_infos = FileInfo("./algoritmi/ptwidedeep/model.pt", "./algoritmi/ptwidedeep/wd_model.pt", "./algoritmi/ptwidedeep/WidePreprocessor.pkl", "./algoritmi/ptwidedeep/TabPreprocessor.pkl", "./algoritmi/ptwidedeep/data_preprocessed_NN.csv", "./preprocessor/exported_csv/anaart.csv", "./preprocessor/exported_csv/anacli.csv")
     neural_network = Model(file_infos)
     neural_network.train_model()
 
-    top_items = neural_network.TopN_1UserNItem(20, 20)
+    top_items = neural_network.TopN_1UserNItem(13, 3)
     print(f"Top {len(top_items)} possible items for user {20}:")
     for rank, (item_id, rating) in enumerate(top_items, start=1):
         print(f"Rank {rank}: User ID: {item_id}, Predicted Rating: {rating}")
@@ -171,4 +173,3 @@ if __name__ == '__main__':
     print(f"Top {len(top_users)} possible users for product {20}:")
     for rank, (user_id, rating) in enumerate(top_users, start=1):
         print(f"Rank {rank}: User ID: {user_id}, Predicted Rating: {rating}")
-
