@@ -74,7 +74,7 @@ if __name__ == '__main__':
         X_wide=X_wide,
         X_tab=X_tab,
         target=target,
-        n_epochs=5,
+        n_epochs=1,
         batch_size=64,
     )
 
@@ -144,12 +144,17 @@ if __name__ == '__main__':
         # Return the top-N products
         return top_n_products
 
+    from NN2 import FileInfo, Model
+    file_infos = FileInfo("./algoritmi/ptwidedeep/model.pt", "./algoritmi/ptwidedeep/wd_model.pt", "./algoritmi/ptwidedeep/WidePreprocessor.pkl", "./algoritmi/ptwidedeep/TabPreprocessor.pkl", "./algoritmi/ptwidedeep/data_preprocessed_NN.csv", "./preprocessor/exported_csv/anacli.csv", "./preprocessor/exported_csv/anaart.csv")
+    neural_network = Model(file_infos)
+    neural_network.train_model()
+    
     # Example usage:
     product_id = 1102055  # Example product ID
     user_ids_csv = 'preprocessor/exported_csv/anacli.csv'  # Path to the CSV file containing user IDs
-    top_users = top_n_users_for_product(trained_model=trainer, product_id=product_id, 
+    top_users = top_n_users_for_product(trained_model=neural_network.trainer, product_id=product_id, 
                                         user_ids_csv=user_ids_csv,
-                                        wide_preprocessor=wide_preprocessor, 
+                                        wide_preprocessor=neural_network.wide_preprocessor, 
                                         tab_preprocessor=tab_preprocessor, N=10)
     print(f"Top {len(top_users)} possible users for product {product_id}:")
     for rank, (user_id, rating) in enumerate(top_users, start=1):

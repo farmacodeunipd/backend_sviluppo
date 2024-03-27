@@ -27,7 +27,7 @@ class FileInfo:
         return pd.DataFrame(data)
 
 class Model:
-    def __init__(self, file_info, epochs_n = 5, batch_size = 64):
+    def __init__(self, file_info, epochs_n =5, batch_size = 64):
         self.file_info = file_info
         self.epochs_n = epochs_n
         self.batch_size = batch_size
@@ -58,11 +58,12 @@ class Model:
         self.target = df_train[self.target].values
 
         self.wide_preprocessor = WidePreprocessor(wide_cols = wide_cols, crossed_cols = crossed_cols)
-        self.tab_preprocessor = TabPreprocessor(cat_embed_cols = cat_embed_cols, continuous_cols = continuous_cols)
-        self.save_preprocessors()
+        self.tab_preprocessor = TabPreprocessor(cat_embed_cols = cat_embed_cols)
 
         self.wide_component = self.wide_preprocessor.fit_transform(df_train)
         self.deep_component = self.tab_preprocessor.fit_transform(df_train)
+
+        self.save_preprocessors()
 
         wide = Wide(input_dim = np.unique(self.wide_component).shape[0], pred_dim = 1)
         tab_mlp = TabMlp(column_idx = self.tab_preprocessor.column_idx, cat_embed_input = self.tab_preprocessor.cat_embed_input)
@@ -100,13 +101,13 @@ class Model:
     def TopN_1UserNItem(self, user_id, n = 5):
         # Read the CSV file containing product IDs
         products_df = pd.read_csv(self.file_info.item_dataset_path)
-        
+
         # Add the user ID column to the DataFrame
         products_df['cod_cli'] = user_id
         
         # Preprocess the product information
         X_product_wide = self.wide_preprocessor.transform(products_df)
-        X_product_tab = self.tab_preprocessor.transform(products_df)
+        X_product_tab = self.tab_preprocessor.transform(products_df)         
         
         # Make predictions for the products and user
         product_rating_predictions = self.trainer.predict(X_wide=X_product_wide, X_tab=X_product_tab, batch_size=self.batch_size)
@@ -115,7 +116,7 @@ class Model:
         product_ratings = list(zip(products_df['cod_art'], product_rating_predictions))
         
         # Sort the products by predicted ratings in descending order
-        top_n_products = sorted(product_ratings, key=lambda x: x[1], reverse=True)[:n]
+        top_n_products = sorted(product_ratings, key=lambda x: x[1])[:n]
         
         # Return the top-N products
         return top_n_products
@@ -141,24 +142,22 @@ class Model:
         user_ratings = list(zip(users_df['cod_cli'], user_rating_predictions))
         
         # Sort the users by predicted ratings in descending order
-        top_n_users = sorted(user_ratings, key=lambda x: x[1], reverse=True)[:n]
+        top_n_users = sorted(user_ratings, key=lambda x: x[1])[:n]
         
         # Return the top-N users
         return top_n_users
     
-if __name__ == "__main__":
-    multiprocessing.freeze_support()
 
-    file_infos = FileInfo("./algoritmi/ptwidedeep/model.pt", "./algoritmi/ptwidedeep/wd_model.pt", "./algoritmi/ptwidedeep/WidePreprocessor.pkl", "./algoritmi/ptwidedeep/TabPreprocessor.pkl", "./algoritmi/ptwidedeep/data_preprocessed_NN.csv", "./preprocessor/exported_csv/anacli.csv", "./preprocessor/exported_csv/anaart.csv")
-    neural_network = Model(file_infos)
-    neural_network.train_model()
+file_infos = FileInfo("./algoritmi/ptwidedeep/model.pt", "./algoritmi/ptwidedeep/wd_model.pt", "./algoritmi/ptwidedeep/WidePreprocessor.pkl", "./algoritmi/ptwidedeep/TabPreprocessor.pkl", "./algoritmi/ptwidedeep/data_preprocessed_NN.csv", "./preprocessor/exported_csv/anacli.csv", "./preprocessor/exported_csv/anaart.csv")
+neural_network = Model(file_infos)
+neural_network.train_model()
 
-    top_items = neural_network.TopN_1UserNItem(13, 20)
-    print(f"Top {len(top_items)} possible items for user {20}:")
-    for rank, (item_id, rating) in enumerate(top_items, start=1):
-        print(f"Rank {rank}: User ID: {item_id}, Predicted Rating: {rating}")
+top_items = neural_network.TopN_1UserNItem(13, 20)
+print(f"Top {len(top_items)} possible items for user {13}:")
+for rank, (item_id, rating) in enumerate(top_items, start=1):
+    print(f"Rank {rank}: User ID: {item_id}, Predicted Rating: {rating}")
 
-    top_users = neural_network.TopN_1ItemNUser([1215051,"12","5Z","LP"], 20)
-    print(f"Top {len(top_users)} possible users for product {20}:")
-    for rank, (user_id, rating) in enumerate(top_users, start=1):
-        print(f"Rank {rank}: User ID: {user_id}, Predicted Rating: {rating}")
+top_users = neural_network.TopN_1ItemNUser([1215051,"12","5Z","LP"], 20)
+print(f"Top {len(top_users)} possible users for product {1215051}:")
+for rank, (user_id, rating) in enumerate(top_users, start=1):
+    print(f"Rank {rank}: User ID: {user_id}, Predicted Rating: {rating}")
