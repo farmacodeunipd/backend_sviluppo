@@ -12,8 +12,11 @@ import multiprocessing
 import os
 import pickle
 
-def rating_float2int (float_rating, float_ratingMax, float_ratingMin = 0, int_ratingMax = 5, int_ratingMin = 1):
-    return int(((float_ratingMax - float_rating) - float_ratingMin) / (float_ratingMax - float_ratingMin) * (int_ratingMax - int_ratingMin)) + int_ratingMin
+def ratings_float2int (float_ratings, float_ratingMax = 2, float_ratingMin = 0, int_ratingMax = 5, int_ratingMin = 1):
+    int_ratings = []
+    for prediction in float_ratings:
+        int_ratings.append(((prediction - float_ratingMax) / (float_ratingMin - float_ratingMax)) * (int_ratingMax - int_ratingMin) + int_ratingMin)
+    return int_ratings
 
 class FileInfo:
     def __init__(self, model_file, model_state_file, wide_preprocessor_file, tab_preprocessor_file, dataset_path, user_dataset_path, item_dataset_path):
@@ -112,13 +115,12 @@ class Model:
         product_rating_predictions = self.trainer.predict(X_wide = X_product_wide, X_tab = X_product_tab, batch_size = self.batch_size)
 
         product_rating_predictions = abs(product_rating_predictions)
-        maxValue = max(product_rating_predictions)
-        for prediction in product_rating_predictions:
-            prediction = np.maximum(prediction, 0.0001)
-            prediction = rating_float2int(float_rating = prediction, float_ratingMax = maxValue)
         
-        product_ratings = list(zip(products_df['cod_art'], product_rating_predictions))
-        top_n_products = sorted(product_ratings, key=lambda x: x[1], reverse = False)[:n]
+        converted_ratings = ratings_float2int(product_rating_predictions, float_ratingMax = max(product_rating_predictions))
+        
+        product_ratings = list(zip(products_df['cod_art'], converted_ratings))
+        
+        top_n_products = sorted(product_ratings, key=lambda x: x[1], reverse = True)[:n] 
         
         return top_n_products
     
@@ -136,12 +138,11 @@ class Model:
         user_rating_predictions = self.trainer.predict(X_wide = X_user_wide, X_tab = X_user_tab, batch_size = self.batch_size)
 
         user_rating_predictions = abs(user_rating_predictions)
-        maxValue = max(user_rating_predictions)
-        for prediction in user_rating_predictions:
-            prediction = np.maximum(prediction, 0.0001)
-            prediction = rating_float2int(prediction, float_ratingMax = maxValue)
         
-        user_ratings = list(zip(users_df['cod_cli'], user_rating_predictions))
+        converted_ratings = ratings_float2int(user_rating_predictions, float_ratingMax = max(user_rating_predictions))
+        
+        user_ratings = list(zip(users_df['cod_art'], converted_ratings))
+
         top_n_users = sorted(user_ratings, key=lambda x: x[1], reverse = True)[:n]
         
         return top_n_users
