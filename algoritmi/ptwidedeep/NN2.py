@@ -12,7 +12,7 @@ import multiprocessing
 import os
 import pickle
 
-def ratings_float2int (float_ratings, float_ratingMax = 2, float_ratingMin = 0, int_ratingMax = 5, int_ratingMin = 1):
+def ratings_float2int(float_ratings, float_ratingMax = 2, float_ratingMin = 0, int_ratingMax = 5, int_ratingMin = 1):
     int_ratings = []
     for prediction in float_ratings:
         int_ratings.append(((prediction - float_ratingMax) / (float_ratingMin - float_ratingMax)) * (int_ratingMax - int_ratingMin) + int_ratingMin)
@@ -154,12 +154,12 @@ if __name__ == '__main__':
     neural_network = Model(file_infos, epochs_n=5)
     neural_network.train_model()
 
-    top_items = neural_network.TopN_1UserNItem(13, 10)
+    top_items = neural_network.TopN_1UserNItem(13, 5000)
     print(f"Top {len(top_items)} possible items for user {13}:")
     for rank, (item_id, rating) in enumerate(top_items, start=1):
         print(f"Rank {rank}: User ID: {item_id}, Predicted Rating: {rating}")
 
-    '''top_users = neural_network.TopN_1ItemNUser([1215051,"12","5Z","LP"], 20)
+    top_users = neural_network.TopN_1ItemNUser([1215051,"12","5Z","LP"], 20)
     print(f"Top {len(top_users)} possible users for product {1215051}:")
     for rank, (user_id, rating) in enumerate(top_users, start=1):
-        print(f"Rank {rank}: User ID: {user_id}, Predicted Rating: {rating}")'''
+        print(f"Rank {rank}: User ID: {user_id}, Predicted Rating: {rating}")
