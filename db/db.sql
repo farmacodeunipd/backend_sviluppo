@@ -63,6 +63,7 @@ CREATE TABLE anaart(
     cod_sett_comm varchar(2),
     cod_fam_comm varchar(2),
     cod_sott_comm varchar(2),
+    image_path VARCHAR(255),
     PRIMARY KEY(cod_art),
     FOREIGN KEY(cod_linea_comm) REFERENCES linee_comm(cod_linea_comm) ON UPDATE CASCADE ON DELETE SET NULL,
     FOREIGN KEY(cod_sett_comm) REFERENCES settori_comm(cod_sett_comm) ON UPDATE CASCADE ON DELETE SET NULL,
