@@ -34,7 +34,7 @@ class NN_FileInfo(BaseFileInfo):
         data = pd.read_csv(self.dataset_path)
         return pd.DataFrame(data)
 
-class Model:
+class NN_Model(BaseModel):
     def __init__(self, file_info, epochs_n = 10, batch_size = 64):
         self.file_info = file_info
         self.epochs_n = epochs_n
@@ -106,13 +106,15 @@ class Model:
 
         self.save_model()
     
-    def topN_1ItemNUser(self, item_infos, n = 5):
+    def topN_1ItemNUser(self, item_id, n = 5):
         users_df = pd.DataFrame(pd.read_csv(self.file_info.user_dataset_path))
         
-        users_df['cod_art'] = item_infos[0]
-        users_df['cod_linea_comm'] = item_infos[1]
-        users_df['cod_sett_comm'] = item_infos[2]
-        users_df['cod_fam_comm'] = item_infos[3]
+        users_df['cod_art'] = item_id
+        item_df = pd.read_csv(self.file_info.item_dataset_path)
+        item_info = item_df[item_df['cod_art'] == item_id]
+        users_df['cod_linea_comm'] = item_info['cod_linea_comm'].iloc[0]
+        users_df['cod_sett_comm'] = item_info['cod_sett_comm'].iloc[0]
+        users_df['cod_fam_comm'] = item_info['cod_fam_comm'].iloc[0]
         
         X_user_wide = self.wide_preprocessor.transform(users_df)
         X_user_tab = self.tab_preprocessor.transform(users_df)
