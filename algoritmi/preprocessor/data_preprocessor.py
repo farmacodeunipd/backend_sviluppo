@@ -7,11 +7,7 @@ import os
 
 class Preprocessor(ABC):
     tables_to_export = []
-    
-    @abstractmethod
-    def retrieve_file(self, cursor, table_name, csv_path):
-        pass
-    
+        
     def retrieve_file(self, cursor, table_name, csv_path):
         cursor.execute(f"SELECT * FROM {table_name}")
         rows = cursor.fetchall()
@@ -26,6 +22,10 @@ class Preprocessor(ABC):
             print(f"Table '{table_name}' exported to '{csv_file}'")
         else:
             print(f"No data found in table '{table_name}'")
+    
+    @abstractmethod
+    def process_file(self, input_file_og, input_file_fb, output_file):
+        pass
 
 class SVD_Preprocessor(Preprocessor):
     tables_to_export = ['ordclidet_feedback', 'ordclidet']
@@ -91,36 +91,19 @@ class PreprocessorContext:
         self.preprocessor = preprocessor
 
     def process_file(self, input_file_og, input_file_fb, output_file):
-        self.preprocessor.process_file(input_file_og, input_file_fb, output_file)
-
-# Example usage
-if __name__ == "__main__":
-    svd_preprocessor = SVD_Preprocessor()
-    nn_preprocessor = NN_Preprocessor()
-    context = PreprocessorContext(nn_preprocessor)  # Initial strategy
-    
-    with mysql.connector.connect(
-        host='localhost',  # <--- Enter your database details here
-        user='myuser',
-        password='mypassword',
-        database='mydatabase',
-        port='3306'
-    ) as conn:
-        cursor = conn.cursor()
-        csv_folder = './algoritmi/preprocessor/exported_csv'
-        if not os.path.exists(csv_folder):
-            os.makedirs(csv_folder)
+        with mysql.connector.connect(
+                host='localhost',
+                user='myuser',
+                password='mypassword',
+                database='mydatabase',
+                port='3306'
+            ) as conn:
+            cursor = conn.cursor()
+            csv_folder = 'algoritmi/preprocessor/exported_csv'
+            if not os.path.exists(csv_folder):
+                os.makedirs(csv_folder)
             
-        for table_name in context.preprocessor.tables_to_export:
-            context.preprocessor.retrieve_file(cursor, table_name, csv_folder)
+            for table_name in self.preprocessor.tables_to_export:
+                self.preprocessor.retrieve_file(cursor, table_name, csv_folder)
             
-        context.process_file('./algoritmi/preprocessor/exported_csv/ordclidet.csv', './algoritmi/preprocessor/exported_csv/ordclidet_feedback.csv', './algoritmi/ptwidedeep/data_preprocessed_NN.csv')
-        print(f"processed data ready")
-
-        context.set_preprocessor(svd_preprocessor)
-
-        for table_name in  context.preprocessor.tables_to_export:
-            context.preprocessor.retrieve_file(cursor, table_name, csv_folder)
-
-        # Process files using the selected strategy
-        context.process_file('./algoritmi/preprocessor/exported_csv/ordclidet.csv', './algoritmi/preprocessor/exported_csv/ordclidet_feedback.csv', './algoritmi/surprisedir/data_preprocessed_matrix.csv')
+            self.preprocessor.process_file(input_file_og, input_file_fb, output_file)
